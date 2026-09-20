@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SculPtron</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Orbitron',monospace;background:#030308;overflow:hidden;margin:0}
+.grid{background-image:linear-gradient(rgba(255,159,28,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,159,28,.04) 1px,transparent 1px);background-size:50px 50px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinR{to{transform:rotate(-360deg)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-12px) rotate(2deg)}}
+@keyframes shine{0%{transform:translateX(-100%) rotate(25deg)}100%{transform:translateX(200%) rotate(25deg)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 80px #ff9f1c,0 0 140px #ff6a0040, inset -20px -20px 40px rgba(0,0,0,.8), inset 10px 10px 20px rgba(255,255,255,.3)}50%{box-shadow:0 0 120px #ff9f1c,0 0 200px #ff6a0080, inset -20px -20px 40px rgba(0,0,0,.8), inset 15px 15px 30px rgba(255,255,255,.4)}}
+.sphere{animation:breathe 3s ease-in-out infinite, pulseGlow 2s ease-in-out infinite; background:radial-gradient(circle at 32% 30%, #ffecb3 0%, #ffd27a 12%, #ffb347 22%, #ff9f1c 38%, #ff7a00 58%, #cc4a00 78%, #7a1f00 100%)}
+.ring1{animation:spin 9s linear infinite}
+.ring2{animation:spinR 14s linear infinite}
+.ring3{animation:spin 22s linear infinite}
+.shine{animation:shine 3s ease-in-out infinite; background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent)}
+.listening{animation:breathe.4s infinite, pulseGlow.4s infinite!important; transform:scale(1.2)!important}
+</style>
+</head>
+<body class="text-white h-screen flex flex-col grid">
+<div class="flex justify-between p-5 text-[10px] tracking-[0.5em]"><div class="text-amber-200">SCULPTRON · GOLD SYSTEM</div><div class="text-emerald-400 flex gap-2 items-center"><span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>ONLINE</div></div>
+
+<div class="flex-1 flex flex-col items-center justify-center">
+<div class="relative w-[300px] h-[300px] flex items-center justify-center">
+<div class="ring1 absolute w-[360px] h-[360px] rounded-full border border-amber-400/20"></div>
+<div class="ring2 absolute w-[420px] h-[420px] rounded-full border border-cyan-300/15"></div>
+<div class="ring3 absolute w-[500px] h-[500px] rounded-full border border-dashed border-amber-400/10"></div>
+
+<!-- BOLA 3D REAL CSS -->
+<div id="orb" class="sphere w-[210px] h-[210px] rounded-full relative overflow-hidden">
+<div class="absolute inset-0 rounded-full" style="background:radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.4) 0%, transparent 50%)"></div>
+<div class="absolute top-[18%] left-[22%] w-[35%] h-[18%] bg-white/40 rounded-full blur-[6px] rotate-[-15deg]"></div>
+<div class="absolute w-[60%] h-full top-0 -left-[20%] shine opacity-60 skew-x-12"></div>
+<div class="absolute inset-0 rounded-full opacity-30" style="background:repeating-conic-gradient(from 0deg, transparent 0deg 20deg, rgba(0,0,0,.05) 20deg 21deg)"></div>
+</div>
+
+<div class="absolute w-[260px] h-[260px] bg-amber-500/20 blur-[50px] rounded-full -z-10"></div>
+</div>
+
+<div id="status" class="mt-16 text-[11px] tracking-[0.6em] text-amber-200/80">STANDING BY</div>
+<button id="talkBtn" class="mt-6 px-10 py-3.5 bg-amber-500/10 border border-amber-400/30 rounded-full text-[11px] tracking-[0.3em] backdrop-blur hover:bg-amber-400/20 transition">FALAR COM SCULPTRON</button>
+<div id="chat" class="mt-5 w-[92%] max-w-xl max-h-32 overflow-y-auto space-y-2 hidden text-xs"></div>
+<div class="mt-4 flex gap-2 w-[92%] max-w-xl"><input id="textInput" placeholder="Falar ou digitar..." class="flex-1 bg-black/50 border border-white/10 rounded-full px-5 py-3 text-xs outline-none focus:border-amber-400/40"><button onclick="sendText()" class="bg-amber-500/20 border border-amber-400/30 px-5 rounded-full text-xs">Enviar</button></div>
+</div>
+
+<div class="grid grid-cols-4 gap-2 p-3 max-w-4xl mx-auto w-full mb-3">
+<div class="border border-white/5 bg-black/30 p-3 rounded-xl text-center"><div class="text-[8px] text-cyan-300">CONVERSA</div></div>
+<div class="border border-amber-500/10 bg-black/30 p-3 rounded-xl text-center"><div class="text-[8px] text-amber-300">MEMÓRIA</div></div>
+<div class="border border-white/5 bg-black/30 p-3 rounded-xl text-center"><div class="text-[8px] text-cyan-300">PROJETOS</div></div>
+<div class="border border-amber-500/10 bg-black/30 p-3 rounded-xl text-center"><div class="text-[8px] text-amber-300">HISTÓRICO</div></div>
+</div>
+
+<script>
+let rec, listening=false; const orb=document.getElementById('orb'), st=document.getElementById('status'), chat=document.getElementById('chat'), btn=document.getElementById('talkBtn');
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){rec=new SR(); rec.lang='pt-BR';
+rec.onstart=()=>{listening=true; orb.classList.add('listening'); st.textContent='OUVINDO...'; st.classList.add('animate-pulse')};
+rec.onend=()=>{listening=false; orb.classList.remove('listening'); st.textContent='STANDING BY'; st.classList.remove('animate-pulse')};
+rec.onresult=e=>{let t=e.results[0][0].transcript; addMsg('Você: '+t); reply(t);};
+}
+btn.onclick=()=>{if(!rec)return alert('Use Chrome Sir'); listening?rec.stop():rec.start();};
+function addMsg(m){chat.classList.remove('hidden'); chat.innerHTML+=`<div class='p-2.5 bg-white/[0.04] border border-white/5 rounded-lg backdrop-blur'>${m}</div>`; chat.scrollTop=chat.scrollHeight}
+function reply(t){let r=`Entendido Sir! "${t}" - sistema dourado 100% operacional!`; addMsg('SculPtron: '+r); let u=new SpeechSynthesisUtterance(r); u.lang='pt-BR'; u.rate=1.05; speechSynthesis.speak(u);}
+function sendText(){let i=document.getElementById('textInput'); if(!i.value)return; let v=i.value; i.value=''; addMsg('Você: '+v); reply(v);}
+</script>
+</body>
+</html>
