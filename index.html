@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SculPtron</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Orbitron',monospace;background:#040408;overflow:hidden;margin:0}
+@keyframes spin{to{transform:rotate(360deg)}} @keyframes spinR{to{transform:rotate(-360deg)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.ring1{animation:spin 25s linear infinite}.ring2{animation:spinR 35s linear infinite}.ring3{animation:spin 50s linear infinite}
+.orb-wrap{animation:breathe 6s ease-in-out infinite; transition:transform.6s ease}
+.listening{transform:scale(1.12)!important}.speaking{transform:scale(1.2)!important}
+</style>
+</head>
+<body class="text-white h-screen flex flex-col bg-[#020208]">
+<div class="flex justify-between p-4 text-[10px] tracking-[0.5em]"><div class="text-amber-200">SCULPTRON · GOLD SYSTEM</div><div class="text-emerald-400 flex gap-2 items-center"><span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>ONLINE</div></div>
+
+<div class="flex-1 flex flex-col items-center justify-center">
+<div class="relative w-[320px] h-[320px] flex items-center justify-center">
+<div class="ring1 absolute w-[380px] h-[380px] rounded-full border border-amber-400/20"></div>
+<div class="ring2 absolute w-[440px] h-[440px] rounded-full border border-cyan-300/10"></div>
+<div class="ring3 absolute w-[520px] h-[520px] rounded-full border border-dashed border-amber-400/10"></div>
+
+<!-- BOLA 3D CANVAS - FUNCIONA OFFLINE -->
+<div id="orbWrap" class="orb-wrap relative w-[230px] h-[230px] rounded-full overflow-hidden border border-amber-500/30 shadow-[0_0_90px_rgba(255,159,28,0.5)] bg-black">
+<canvas id="core" width="300" height="300" class="w-full h-full rounded-full"></canvas>
+<div class="absolute inset-0 rounded-full pointer-events-none" style="background:radial-gradient(circle at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 40%, rgba(0,0,0,0.6) 85%)"></div>
+</div>
+<div id="glow" class="absolute w-[300px] h-[300px] bg-amber-500/25 blur-[65px] rounded-full -z-10 transition-all duration-700"></div>
+</div>
+
+<div id="status" class="mt-14 text-[11px] tracking-[0.6em] text-amber-200/80">STANDING BY</div>
+<button id="talkBtn" class="mt-6 px-10 py-3.5 bg-amber-500/10 border border-amber-400/30 rounded-full text-[11px] tracking-[0.3em] hover:bg-amber-400/20 transition">FALAR COM SCULPTRON</button>
+<div id="chat" class="mt-5 w-[92%] max-w-xl max-h-32 overflow-y-auto space-y-2 hidden text-xs"></div>
+<div class="mt-4 flex gap-2 w-[92%] max-w-xl"><input id="textInput" placeholder="Falar ou digitar..." class="flex-1 bg-black/60 border border-white/10 rounded-full px-5 py-3 text-xs outline-none"><input type="hidden"><button onclick="sendText()" class="bg-amber-500/20 border border-amber-400/30 px-6 rounded-full text-xs">Enviar</button></div>
+</div>
+
+<script>
+// CANVAS NUCLEO DOURADO ANIMADO - SEM VIDEO SIR!
+const canvas=document.getElementById('core'), ctx=canvas.getContext('2d');
+let t=0, speed=0.015, intensity=0.8;
+function draw(){
+ requestAnimationFrame(draw); t+=speed;
+ ctx.clearRect(0,0,300,300);
+ // fundo dourado radial
+ let grad=ctx.createRadialGradient(150,150,0,150,150,150);
+ grad.addColorStop(0,'#fff7cc'); grad.addColorStop(0.15,'#ffd27a'); grad.addColorStop(0.3,'#ffb347'); grad.addColorStop(0.55,'#ff8c00'); grad.addColorStop(0.8,'#b34700'); grad.addColorStop(1,'#3a1200');
+ ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(150,150,145,0,Math.PI*2); ctx.fill();
+ // plasma girando
+ for(let i=0;i<5;i++){
+   let ang=t*0.8 + i*1.25; let x=150+Math.cos(ang)* (30+Math.sin(t+i)*15); let y=150+Math.sin(ang*1.3)* (30+Math.cos(t+i*0.7)*15);
+   let g=ctx.createRadialGradient(x,y,0,x,y,60+intensity*20);
+   g.addColorStop(0,'rgba(255,255,255,0.9)'); g.addColorStop(0.2,'rgba(255,236,179,0.6)'); g.addColorStop(1,'rgba(255,140,0,0)');
+   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,55,0,Math.PI*2); ctx.fill();
+ }
+ // brilho central pulsante
+ ctx.fillStyle=`rgba(255,255,255,${0.15+Math.sin(t*2)*0.1*intensity})`;
+ ctx.beginPath(); ctx.arc(105,90,25+Math.sin(t*3)*3,0,Math.PI*2); ctx.fill();
+}
+draw();
+
+let rec,listening=false,speaking=false,animInt;
+const orbWrap=document.getElementById('orbWrap'),glow=document.getElementById('glow'),st=document.getElementById('status'),chat=document.getElementById('chat'),btn=document.getElementById('talkBtn');
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR){rec=new SR(); rec.lang='pt-BR';
+rec.onstart=()=>{listening=true; orbWrap.classList.add('listening'); st.textContent='OUVINDO...'; speed=0.04; intensity=1.5; glow.style.transform='scale(1.4)'; glow.style.background='rgba(255,159,28,0.55)'};
+rec.onend=()=>{listening=false; orbWrap.classList.remove('listening'); st.textContent='STANDING BY'; speed=0.015; intensity=0.8; glow.style.transform='scale(1)'; glow.style.background='rgba(245,158,11,0.25)'};
+rec.onresult=e=>{let txt=e.results[0][0].transcript; addMsg('Você: '+txt); reply(txt);};
+}
+btn.onclick=()=>{if(!rec)return alert('Use Chrome Sir'); listening?rec.stop():rec.start();};
+function addMsg(m){chat.classList.remove('hidden'); chat.innerHTML+=`<div class='p-2.5 bg-white/[0.04] border border-white/5 rounded-lg'>${m}</div>`; chat.scrollTop=chat.scrollHeight}
+function reply(tt){
+ let r=`Entendido Sir! "${tt}" - núcleo dourado 100% operacional!`; addMsg('SculPtron: '+r); speechSynthesis.cancel();
+ let u=new SpeechSynthesisUtterance(r); u.lang='pt-BR'; u.rate=0.95;
+ u.onstart=()=>{speaking=true; orbWrap.classList.add('speaking'); st.textContent='FALANDO...'; speed=0.07; intensity=2.0;
+   let sc=1; animInt=setInterval(()=>{if(!speaking)return; sc=1.15+Math.random()*0.18; orbWrap.style.transform=`scale(${sc})`; glow.style.transform=`scale(${sc*1.25})`;},320);
+ };
+ u.onend=()=>{speaking=false; clearInterval(animInt); orbWrap.classList.remove('speaking'); orbWrap.style.transform='scale(1)'; glow.style.transform='scale(1)'; speed=0.015; intensity=0.8; st.textContent='STANDING BY';};
+ speechSynthesis.speak(u);
+}
+function sendText(){let i=document.getElementById('textInput'); if(!i.value)return; let v=i.value; i.value=''; addMsg('Você: '+v); reply(v);}
+</script>
+</body>
+</html>
